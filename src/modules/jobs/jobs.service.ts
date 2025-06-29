@@ -3,7 +3,7 @@ import { EventBus } from '@/shared/infrastructure/events';
 import type { Job } from './jobs.schema';
 import type { CreateJobInput, UpdateJobInput } from './jobs.types';
 import { JobStatus } from './jobs.types';
-import { createId } from '@paralleldrive/cuid2';
+import { createId } from '@/shared/utils/createId';
 
 export class JobsService {
   constructor(

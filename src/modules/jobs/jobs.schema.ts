@@ -1,5 +1,5 @@
 import { pgTable, text, integer, timestamp, json, varchar } from 'drizzle-orm/pg-core';
-import { createId } from '@paralleldrive/cuid2';
+import { createId } from '@/shared/utils/createId';
 import { JobStatus, JobType } from './jobs.types';
 
 export const jobs = pgTable('jobs', {
