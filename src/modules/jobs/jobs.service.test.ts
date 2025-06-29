@@ -111,6 +111,22 @@ describe('JobsService', () => {
         department: 'Engineering',
       };
 
+      createMock.mockReturnValueOnce(Promise.resolve({
+        id: 'invalid-job-id',
+        title: '',
+        description: 'Short',
+        department: 'Engineering',
+        location: null,
+        salaryMin: null,
+        salaryMax: null,
+        requirements: null,
+        status: JobStatus.DRAFT,
+        jobType: 'posting',
+        createdBy: 'test-user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
       // In a real implementation, this would throw a validation error
       // For now, we'll just test that the repository is called
       await service.createJob(invalidJobData as any, 'test-user');
@@ -208,6 +224,22 @@ describe('JobsService', () => {
 
   describe('getJob', () => {
     it('should return a job by id', async () => {
+      findByIdMock.mockReturnValueOnce(Promise.resolve({
+        id: 'test-job-id',
+        status: JobStatus.PUBLISHED,
+        title: 'Test Job',
+        description: 'Test description',
+        department: 'Engineering',
+        location: null,
+        salaryMin: null,
+        salaryMax: null,
+        requirements: null,
+        jobType: 'posting',
+        createdBy: 'test-user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+
       const result = await service.getJob('test-job-id');
 
       expect(mockRepository.findById).toHaveBeenCalledWith('test-job-id');
