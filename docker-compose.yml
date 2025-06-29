@@ -1,0 +1,102 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hr-recruitment-postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - hr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-hr_recruitment}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Main application
+  hr-recruitment:
+    build:
+      context: .
+      target: development  # Use development stage by default
+    container_name: hr-recruitment-app
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env
+    volumes:
+      # Mount source code for hot reload in development
+      - .:/app
+      - uploads_data:/app/uploads
+      - node_modules_cache:/app/node_modules  # Cache node_modules for faster startup
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: hr-recruitment-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hr-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # Database management UI (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: hr-recruitment-pgadmin
+    ports:
+      - "8080:80"
+    env_file:
+      - .env
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - hr-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+  node_modules_cache:
+    driver: local
+
+networks:
+  hr-network:
+    driver: bridge

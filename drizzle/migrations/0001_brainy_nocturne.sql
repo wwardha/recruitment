@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN "job_type" varchar(20) DEFAULT 'posting' NOT NULL;

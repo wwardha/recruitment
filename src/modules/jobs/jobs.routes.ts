@@ -1,0 +1,193 @@
+import { Elysia, t } from 'elysia';
+import { JobsService } from './jobs.service';
+import { CreateJobSchema, UpdateJobSchema, PublishJobSchema, JobStatus } from './jobs.types';
+
+export const createJobsRoutes = (jobsService: JobsService) =>
+  new Elysia({ prefix: '/jobs' })
+    .post(
+      '/',
+      async ({ body, set }) => {
+        try {
+          // TODO: Get user ID from auth context
+          const userId = 'temp-user-id';
+          const job = await jobsService.createJob(body, userId);
+          set.status = 201;
+          return { success: true, data: job };
+        } catch (error) {
+          set.status = 400;
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          };
+        }
+      },
+      {
+        body: t.Object({
+          title: t.String({ minLength: 5 }),
+          description: t.String({ minLength: 50 }),
+          department: t.String({ minLength: 1 }),
+          location: t.Optional(t.String()),
+          salaryMin: t.Optional(t.Number({ minimum: 0 })),
+          salaryMax: t.Optional(t.Number({ minimum: 0 })),
+          requirements: t.Optional(t.Array(t.String())),
+        }),
+        detail: {
+          summary: 'Create a new job posting',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .get(
+      '/:id',
+      async ({ params: { id }, set }) => {
+        const job = await jobsService.getJob(id);
+        if (!job) {
+          set.status = 404;
+          return { success: false, error: 'Job not found' };
+        }
+        return { success: true, data: job };
+      },
+      {
+        params: t.Object({
+          id: t.String(),
+        }),
+        detail: {
+          summary: 'Get job by ID',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .get(
+      '/',
+      async ({ query }) => {
+        // Convert string status to JobStatus enum if provided
+        const filters = {
+          ...query,
+          status: query.status && Object.values(JobStatus).includes(query.status as JobStatus) 
+            ? query.status as JobStatus 
+            : undefined
+        };
+        const jobs = await jobsService.listJobs(filters);
+        return { success: true, data: jobs };
+      },
+      {
+        query: t.Optional(t.Object({
+          status: t.Optional(t.String()),
+          department: t.Optional(t.String()),
+          createdBy: t.Optional(t.String()),
+        })),
+        detail: {
+          summary: 'List jobs with optional filters',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .put(
+      '/:id',
+      async ({ params: { id }, body, set }) => {
+        try {
+          const updated = await jobsService.updateJob(id, body);
+          if (!updated) {
+            set.status = 404;
+            return { success: false, error: 'Job not found' };
+          }
+          return { success: true, data: updated };
+        } catch (error) {
+          set.status = 400;
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          };
+        }
+      },
+      {
+        params: t.Object({
+          id: t.String(),
+        }),
+        body: t.Partial(t.Object({
+          title: t.String({ minLength: 5 }),
+          description: t.String({ minLength: 50 }),
+          department: t.String({ minLength: 1 }),
+          location: t.String(),
+          salaryMin: t.Number({ minimum: 0 }),
+          salaryMax: t.Number({ minimum: 0 }),
+          requirements: t.Array(t.String()),
+        })),
+        detail: {
+          summary: 'Update job by ID',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .post(
+      '/:id/publish',
+      async ({ params: { id }, set }) => {
+        try {
+          const published = await jobsService.publishJob(id);
+          return { success: true, data: published };
+        } catch (error) {
+          set.status = 400;
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          };
+        }
+      },
+      {
+        params: t.Object({
+          id: t.String(),
+        }),
+        detail: {
+          summary: 'Publish a job',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .post(
+      '/:id/close',
+      async ({ params: { id }, set }) => {
+        try {
+          const closed = await jobsService.closeJob(id);
+          return { success: true, data: closed };
+        } catch (error) {
+          set.status = 400;
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          };
+        }
+      },
+      {
+        params: t.Object({
+          id: t.String(),
+        }),
+        detail: {
+          summary: 'Close a job',
+          tags: ['Jobs'],
+        },
+      }
+    )
+    .delete(
+      '/:id',
+      async ({ params: { id }, set }) => {
+        try {
+          await jobsService.deleteJob(id);
+          return { success: true, message: 'Job deleted successfully' };
+        } catch (error) {
+          set.status = 400;
+          return { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          };
+        }
+      },
+      {
+        params: t.Object({
+          id: t.String(),
+        }),
+        detail: {
+          summary: 'Delete job by ID',
+          tags: ['Jobs'],
+        },
+      }
+    );
