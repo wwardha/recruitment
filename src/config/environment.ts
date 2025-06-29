@@ -31,7 +31,11 @@ const envSchema = z.object({
   
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:3001,http://localhost:3000'),
-  
+
+  // Rate limiting
+  RATE_LIMIT_WINDOW: z.string().default('15m'),
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   LOG_FORMAT: z.enum(['pretty', 'json']).default('pretty'),
