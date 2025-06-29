@@ -4,6 +4,11 @@ import type { Job } from './jobs.schema';
 import type { CreateJobInput, UpdateJobInput } from './jobs.types';
 import { JobStatus } from './jobs.types';
 import { createId } from '@/shared/utils/createId';
+import {
+  NotFoundError,
+  ConflictError,
+  DatabaseError,
+} from '@/shared/infrastructure/errors';
 
 export class JobsService {
   constructor(
@@ -30,8 +35,12 @@ export class JobsService {
     return job;
   }
 
-  async getJob(id: string): Promise<Job | null> {
-    return this.repository.findById(id);
+  async getJob(id: string): Promise<Job> {
+    const job = await this.repository.findById(id);
+    if (!job) {
+      throw new NotFoundError('Job');
+    }
+    return job;
   }
 
   async listJobs(filters?: { 
@@ -42,14 +51,14 @@ export class JobsService {
     return this.repository.findAll(filters);
   }
 
-  async updateJob(id: string, data: UpdateJobInput): Promise<Job | null> {
+  async updateJob(id: string, data: UpdateJobInput): Promise<Job> {
     const existingJob = await this.repository.findById(id);
     if (!existingJob) {
-      throw new Error('Job not found');
+      throw new NotFoundError('Job');
     }
 
     const updated = await this.repository.update(id, data);
-    
+
     if (updated) {
       this.eventBus.publish('job.updated', {
         jobId: updated.id,
@@ -59,24 +68,28 @@ export class JobsService {
       });
     }
 
+    if (!updated) {
+      throw new DatabaseError('Failed to update job');
+    }
+
     return updated;
   }
 
   async publishJob(id: string): Promise<Job> {
     const job = await this.repository.findById(id);
-    
+
     if (!job) {
-      throw new Error('Job not found');
+      throw new NotFoundError('Job');
     }
 
     if (job.status !== JobStatus.DRAFT) {
-      throw new Error('Only draft jobs can be published');
+      throw new ConflictError('Only draft jobs can be published');
     }
 
     const published = await this.repository.update(id, { status: JobStatus.PUBLISHED });
-    
+
     if (!published) {
-      throw new Error('Failed to publish job');
+      throw new DatabaseError('Failed to publish job');
     }
 
     this.eventBus.publish('job.published', {
@@ -92,19 +105,19 @@ export class JobsService {
 
   async closeJob(id: string): Promise<Job> {
     const job = await this.repository.findById(id);
-    
+
     if (!job) {
-      throw new Error('Job not found');
+      throw new NotFoundError('Job');
     }
 
     if (job.status !== JobStatus.PUBLISHED) {
-      throw new Error('Only published jobs can be closed');
+      throw new ConflictError('Only published jobs can be closed');
     }
 
     const closed = await this.repository.update(id, { status: JobStatus.CLOSED });
-    
+
     if (!closed) {
-      throw new Error('Failed to close job');
+      throw new DatabaseError('Failed to close job');
     }
 
     this.eventBus.publish('job.closed', {
@@ -119,15 +132,15 @@ export class JobsService {
 
   async deleteJob(id: string): Promise<void> {
     const job = await this.repository.findById(id);
-    
+
     if (!job) {
-      throw new Error('Job not found');
+      throw new NotFoundError('Job');
     }
 
     const deleted = await this.repository.delete(id);
-    
+
     if (!deleted) {
-      throw new Error('Failed to delete job');
+      throw new DatabaseError('Failed to delete job');
     }
 
     this.eventBus.publish('job.deleted', {
