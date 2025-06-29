@@ -1,15 +1,16 @@
 import { Elysia, t } from 'elysia';
 import { JobsService } from './jobs.service';
 import { CreateJobSchema, UpdateJobSchema, PublishJobSchema, JobStatus } from './jobs.types';
+import { getCurrentUser } from '@/shared/infrastructure/auth';
 
 export const createJobsRoutes = (jobsService: JobsService) =>
   new Elysia({ prefix: '/jobs' })
     .post(
       '/',
-      async ({ body, set }) => {
+      async (context) => {
+        const { body, set } = context;
         try {
-          // TODO: Get user ID from auth context
-          const userId = 'temp-user-id';
+          const userId = getCurrentUser(context).id;
           const job = await jobsService.createJob(body, userId);
           set.status = 201;
           return { success: true, data: job };
