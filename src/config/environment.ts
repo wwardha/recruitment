@@ -5,9 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z
     .string()
-    .default(
-      'postgresql://postgres:postgres@localhost:5432/hr_recruitment'
-    ),
+    .default('postgresql://postgres:postgres@localhost:5432/hr_recruitment'),
   
   // Authentication
   JWT_SECRET: z.string().default('your-super-secret-jwt-key-change-this-in-production'),
