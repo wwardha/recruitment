@@ -3,6 +3,7 @@ import { JobsService } from './jobs.service';
 import { JobsRepository } from './jobs.repository';
 import { EventBus } from '@/shared/infrastructure/events';
 import { JobStatus } from './jobs.types';
+import { NotFoundError, ConflictError } from '@/shared/infrastructure/errors';
 
 // Create mock functions
 const createMock = mock();
@@ -191,11 +192,11 @@ describe('JobsService', () => {
       expect(result.status).toBe(JobStatus.PUBLISHED);
     });
 
-    it('should throw error if job not found', async () => {
+    it('should throw NotFoundError if job not found', async () => {
       findByIdMock.mockReturnValueOnce(Promise.resolve(null));
 
-      await expect(service.publishJob('non-existent-id')).rejects.toThrow(
-        'Job not found'
+      await expect(service.publishJob('non-existent-id')).rejects.toBeInstanceOf(
+        NotFoundError
       );
     });
 
@@ -216,8 +217,8 @@ describe('JobsService', () => {
         updatedAt: new Date(),
       }));
 
-      await expect(service.publishJob('test-job-id')).rejects.toThrow(
-        'Only draft jobs can be published'
+      await expect(service.publishJob('test-job-id')).rejects.toBeInstanceOf(
+        ConflictError
       );
     });
   });

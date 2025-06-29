@@ -7,19 +7,11 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     .post(
       '/',
       async ({ body, set }) => {
-        try {
-          // TODO: Get user ID from auth context
-          const userId = 'temp-user-id';
-          const job = await jobsService.createJob(body, userId);
-          set.status = 201;
-          return { success: true, data: job };
-        } catch (error) {
-          set.status = 400;
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          };
-        }
+        // TODO: Get user ID from auth context
+        const userId = 'temp-user-id';
+        const job = await jobsService.createJob(body, userId);
+        set.status = 201;
+        return { success: true, data: job };
       },
       {
         body: t.Object({
@@ -39,12 +31,8 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     )
     .get(
       '/:id',
-      async ({ params: { id }, set }) => {
+      async ({ params: { id } }) => {
         const job = await jobsService.getJob(id);
-        if (!job) {
-          set.status = 404;
-          return { success: false, error: 'Job not found' };
-        }
         return { success: true, data: job };
       },
       {
@@ -84,21 +72,9 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     )
     .put(
       '/:id',
-      async ({ params: { id }, body, set }) => {
-        try {
-          const updated = await jobsService.updateJob(id, body);
-          if (!updated) {
-            set.status = 404;
-            return { success: false, error: 'Job not found' };
-          }
-          return { success: true, data: updated };
-        } catch (error) {
-          set.status = 400;
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          };
-        }
+      async ({ params: { id }, body }) => {
+        const updated = await jobsService.updateJob(id, body);
+        return { success: true, data: updated };
       },
       {
         params: t.Object({
@@ -121,17 +97,9 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     )
     .post(
       '/:id/publish',
-      async ({ params: { id }, set }) => {
-        try {
-          const published = await jobsService.publishJob(id);
-          return { success: true, data: published };
-        } catch (error) {
-          set.status = 400;
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          };
-        }
+      async ({ params: { id } }) => {
+        const published = await jobsService.publishJob(id);
+        return { success: true, data: published };
       },
       {
         params: t.Object({
@@ -145,17 +113,9 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     )
     .post(
       '/:id/close',
-      async ({ params: { id }, set }) => {
-        try {
-          const closed = await jobsService.closeJob(id);
-          return { success: true, data: closed };
-        } catch (error) {
-          set.status = 400;
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          };
-        }
+      async ({ params: { id } }) => {
+        const closed = await jobsService.closeJob(id);
+        return { success: true, data: closed };
       },
       {
         params: t.Object({
@@ -169,17 +129,9 @@ export const createJobsRoutes = (jobsService: JobsService) =>
     )
     .delete(
       '/:id',
-      async ({ params: { id }, set }) => {
-        try {
-          await jobsService.deleteJob(id);
-          return { success: true, message: 'Job deleted successfully' };
-        } catch (error) {
-          set.status = 400;
-          return { 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
-          };
-        }
+      async ({ params: { id } }) => {
+        await jobsService.deleteJob(id);
+        return { success: true, message: 'Job deleted successfully' };
       },
       {
         params: t.Object({
