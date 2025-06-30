@@ -407,7 +407,7 @@ Build solid MVP foundation and add professional user management system
 - 🔨 [TASK-M1D021-001] Integrate authentication with existing APIs
 - 🔨 [TASK-M1D021-002] Update job and application endpoints for user context
 - 🧪 [TASK-M1D021-003] Test integrated system
-- 🔧 [TASK-M1D021-004] Fix integration issues
+- 🔧 [TASK-M1D021-004] Replace temporary user ID with `getCurrentUser` call
 
 #### Afternoon Session (2 hours)
 - 📝 [TASK-M1D021-005] Update API documentation
