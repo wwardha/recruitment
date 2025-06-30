@@ -6,15 +6,16 @@ import {
   PublishJobSchema,
   ListJobsQuerySchema,
 } from "./jobs.types";
+import { getCurrentUser } from "@/shared/infrastructure/auth";
 
 export const createJobsRoutes = (jobsService: JobsService) =>
   new Elysia({ prefix: "/jobs" })
     .post(
       "/",
-      async ({ body, set }) => {
+      async (ctx) => {
+        const { body, set } = ctx;
         try {
-          // TODO: Get user ID from auth context
-          const userId = "temp-user-id";
+          const userId = getCurrentUser(ctx).id;
           const data = CreateJobSchema.parse(body);
           const job = await jobsService.createJob(data, userId);
           set.status = 201;
